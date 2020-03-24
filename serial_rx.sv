@@ -5,7 +5,7 @@ module serial_rx(   input           clk_in,
                     output logic [3:0] an, 
                     output logic dp);
     
-    parameter DIVISOR = 868; //treat this like a constant!!
+    parameter DIVISOR = 10000; //treat this like a constant!!
     parameter DATA_WIDTH = 8;
     parameter START_BIT = 0;
     parameter STOP_BIT = 1;
@@ -26,13 +26,19 @@ module serial_rx(   input           clk_in,
                                         // in a shift register so we may send all 8 bits at one
                                         // time (in 8 parallel bit lanes to the seven_seg). Shift reg acts as a buffer (good practice)
     logic [1:0] state;
-
+    logic [DATA_WIDTH-1 : 0] synch_reg; // synchronization register to handle metastability...schematic shows that it
+                                        // seems to add an extra RAMB18E1 block which acts as a buffer after the shift reg.
 
     ascii_to_seven_seg my_converter( 
-                    .ascii_in(shift_reg), 
+                    .ascii_in(synch_reg), 
                     .hex_out(seg),
                     .an(an),
                     .dp(dp));
+
+
+    always_ff @(posedge clk_in) begin
+       synch_reg <= shift_reg;
+    end
 
 
     always_ff @(posedge clk_in) begin
@@ -61,7 +67,7 @@ module serial_rx(   input           clk_in,
                     end else begin
                         shift_reg[ind] <= data_in;
                         count <= 0;
-
+                        
                         if(ind == DATA_WIDTH - 1) begin
                             state <= S_STOP;
                         end else begin
@@ -72,10 +78,10 @@ module serial_rx(   input           clk_in,
 
                 S_WAIT : begin
                     if(data_in == 0) begin
-                        if(count < HALF_PULSE) begin // only read the start_bit if it has been 0 for HALF_PULSE clks
-                            count <= count + 1;      // This ensures that we read the incoming bit somewhere in the middle of
-                        end else begin               // its signal instead of at the beginning when its value may not have been  
-                            state <= S_RECEIVE;      // stable yet
+                        if(count < HALF_PULSE) begin
+                            count <= count + 1;
+                        end else begin
+                            state <= S_RECEIVE;
                             ind <= 0;
                             count <= 0;
                         end
