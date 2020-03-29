@@ -26,7 +26,7 @@ s = get_usb_port()  #grab a port
 print("USB Port: "+str(s)) #print it if you got
 if s:
     ser = serial.Serial(port = s,
-        baudrate=115200,
+        baudrate=9600,
         parity=serial.PARITY_NONE,
         stopbits=serial.STOPBITS_ONE,
         bytesize=serial.EIGHTBITS,
@@ -41,10 +41,10 @@ else:
 try:
     print("Reading...")
     while True:
-        a = input("Enter ascii number: \n")
-        if(ser.write(a.encode())):
-            print("sent character " + a)
-        else:
-            print("NOT ASCCI!")
+        a = input("Enter character\n")
+        a = a.encode()
+        b = ser.write(a)
+        print(b)
 except Exception as e:
     print(e)
+
