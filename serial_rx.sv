@@ -5,7 +5,7 @@ module serial_rx(   input           clk_in,
                     output logic [3:0] an, 
                     output logic dp);
     
-    parameter DIVISOR = 10000; //treat this like a constant!!
+    parameter DIVISOR = 10416; // basys3 supports baud rate of 9600 (100*10^6 / 9600)
     parameter DATA_WIDTH = 8;
     parameter START_BIT = 0;
     parameter STOP_BIT = 1;
